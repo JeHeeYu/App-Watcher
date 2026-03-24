@@ -18,7 +18,8 @@ class AppRepository(private val context: Context) {
                 val packageName = activityInfo.packageName
                 if (packageName == context.packageName) return@mapNotNull null
                 val label = resolveInfo.loadLabel(packageManager)?.toString().orEmpty().ifBlank { packageName }
-                LaunchableApp(packageName = packageName, label = label)
+                val icon = resolveInfo.loadIcon(packageManager)
+                LaunchableApp(packageName = packageName, label = label, icon = icon)
             }
             .distinctBy { it.packageName }
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, LaunchableApp::label))
@@ -44,7 +45,8 @@ class AppRepository(private val context: Context) {
 
         return LaunchableApp(
             packageName = normalizedPackageName,
-            label = label
+            label = label,
+            icon = packageManager.getApplicationIcon(appInfo)
         )
     }
 }
