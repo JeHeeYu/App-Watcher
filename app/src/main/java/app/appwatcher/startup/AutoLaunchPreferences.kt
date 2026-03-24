@@ -50,14 +50,30 @@ class AutoLaunchPreferences(context: Context) {
         prefs.edit().putLong(KEY_BETWEEN_DELAY_MS, value.coerceAtLeast(0L)).apply()
     }
 
+    fun monitorEnabled(): Boolean = prefs.getBoolean(KEY_MONITOR_ENABLED, DEFAULT_MONITOR_ENABLED)
+
+    fun setMonitorEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_MONITOR_ENABLED, value).apply()
+    }
+
+    fun monitorIntervalMs(): Long = prefs.getLong(KEY_MONITOR_INTERVAL_MS, DEFAULT_MONITOR_INTERVAL_MS)
+
+    fun setMonitorIntervalMs(value: Long) {
+        prefs.edit().putLong(KEY_MONITOR_INTERVAL_MS, value.coerceAtLeast(5_000L)).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "auto_launch_prefs"
         private const val KEY_SELECTED_PACKAGES = "selected_packages"
         private const val KEY_INITIAL_DELAY_MS = "initial_delay_ms"
         private const val KEY_BETWEEN_DELAY_MS = "between_delay_ms"
+        private const val KEY_MONITOR_ENABLED = "monitor_enabled"
+        private const val KEY_MONITOR_INTERVAL_MS = "monitor_interval_ms"
         private const val PACKAGE_SEPARATOR = "\n"
 
         const val DEFAULT_INITIAL_DELAY_MS = 3_000L
         const val DEFAULT_BETWEEN_DELAY_MS = 1_500L
+        const val DEFAULT_MONITOR_ENABLED = true
+        const val DEFAULT_MONITOR_INTERVAL_MS = 60_000L
     }
 }

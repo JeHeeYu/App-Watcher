@@ -25,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -73,6 +75,8 @@ fun AppWatcherScreen(
     var registeredApps by remember { mutableStateOf(emptyList<LaunchableApp>()) }
     var initialDelayInput by remember { mutableStateOf("0") }
     var betweenDelayInput by remember { mutableStateOf("0") }
+    var monitorEnabled by remember { mutableStateOf(true) }
+    var monitorIntervalInput by remember { mutableStateOf("60") }
 
     val notificationPermissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) { }
@@ -84,6 +88,8 @@ fun AppWatcherScreen(
         registeredApps = screenData.registeredApps
         initialDelayInput = screenData.initialDelayInput
         betweenDelayInput = screenData.betweenDelayInput
+        monitorEnabled = screenData.monitorEnabled
+        monitorIntervalInput = screenData.monitorIntervalInput
     }
 
     LaunchedEffect(Unit) {
@@ -187,6 +193,8 @@ fun AppWatcherScreen(
                     DelaySettings(
                         initialDelayInput = initialDelayInput,
                         betweenDelayInput = betweenDelayInput,
+                        monitorEnabled = monitorEnabled,
+                        monitorIntervalInput = monitorIntervalInput,
                         onInitialDelayChanged = {
                             initialDelayInput = it
                             manager.updateInitialDelay(it)
@@ -194,6 +202,14 @@ fun AppWatcherScreen(
                         onBetweenDelayChanged = {
                             betweenDelayInput = it
                             manager.updateBetweenDelay(it)
+                        },
+                        onMonitorEnabledChanged = {
+                            monitorEnabled = it
+                            manager.updateMonitorEnabled(it)
+                        },
+                        onMonitorIntervalChanged = {
+                            monitorIntervalInput = it
+                            manager.updateMonitorInterval(it)
                         }
                     )
                 }
@@ -257,8 +273,12 @@ private fun AppWatcherScreenPreview() {
 private fun DelaySettings(
     initialDelayInput: String,
     betweenDelayInput: String,
+    monitorEnabled: Boolean,
+    monitorIntervalInput: String,
     onInitialDelayChanged: (String) -> Unit,
-    onBetweenDelayChanged: (String) -> Unit
+    onBetweenDelayChanged: (String) -> Unit,
+    onMonitorEnabledChanged: (Boolean) -> Unit,
+    onMonitorIntervalChanged: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -278,6 +298,37 @@ private fun DelaySettings(
             onValueChange = onBetweenDelayChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("다음 앱 실행 간격(초)") },
+            singleLine = true
+        )
+        HorizontalDivider()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = "상태 체크",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (monitorEnabled) "죽으면 다시 실행" else "체크 안 함",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                modifier = Modifier.scale(0.82f),
+                checked = monitorEnabled,
+                onCheckedChange = onMonitorEnabledChanged
+            )
+        }
+        OutlinedTextField(
+            value = monitorIntervalInput,
+            onValueChange = onMonitorIntervalChanged,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("체크 간격(초)") },
             singleLine = true
         )
     }

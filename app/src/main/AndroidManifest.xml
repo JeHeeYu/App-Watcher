@@ -47,6 +47,11 @@
             android:theme="@style/Theme.AppWatcher.LaunchProxy" />
 
         <receiver
+            android:name=".startup.AppMonitorReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
             android:name=".startup.BootReceiver"
             android:enabled="true"
             android:exported="true">

@@ -31,5 +31,9 @@ class BootReceiver : BroadcastReceiver() {
             context = context,
             reason = reason
         )
+        AppMonitorScheduler.scheduleNextCheck(
+            context = context,
+            reason = "boot:$reason"
+        )
     }
 }

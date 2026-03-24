@@ -9,6 +9,7 @@ import android.provider.Settings
 import androidx.core.content.ContextCompat
 import app.appwatcher.model.LaunchableApp
 import app.appwatcher.startup.AppRepository
+import app.appwatcher.startup.AppMonitorScheduler
 import app.appwatcher.startup.AutoLaunchPreferences
 
 data class PermissionStatus(
@@ -31,7 +32,9 @@ data class ScreenData(
     val availableApps: List<LaunchableApp>,
     val registeredApps: List<LaunchableApp>,
     val initialDelayInput: String,
-    val betweenDelayInput: String
+    val betweenDelayInput: String,
+    val monitorEnabled: Boolean,
+    val monitorIntervalInput: String
 )
 
 data class PackageMutationResult(
@@ -53,12 +56,15 @@ class AppWatcherManager(private val context: Context) {
     }
 
     fun screenData(): ScreenData {
+        ensureMonitoringScheduled()
         return ScreenData(
             permissions = permissionStatus(),
             availableApps = availableApps(),
             registeredApps = registeredApps(),
             initialDelayInput = (preferences.initialDelayMs() / 1000L).toString(),
-            betweenDelayInput = (preferences.betweenDelayMs() / 1000L).toString()
+            betweenDelayInput = (preferences.betweenDelayMs() / 1000L).toString(),
+            monitorEnabled = preferences.monitorEnabled(),
+            monitorIntervalInput = (preferences.monitorIntervalMs() / 1000L).toString()
         )
     }
 
@@ -79,6 +85,7 @@ class AppWatcherManager(private val context: Context) {
 
         updatedPackages.add(launchableApp.packageName)
         preferences.setSelectedPackages(updatedPackages)
+        syncMonitoring()
         return PackageMutationResult(
             message = "패키지를 등록했습니다.",
             registeredApps = registeredApps()
@@ -90,6 +97,7 @@ class AppWatcherManager(private val context: Context) {
             remove(packageName)
         }
         preferences.setSelectedPackages(updatedPackages)
+        syncMonitoring()
         return PackageMutationResult(
             message = "패키지를 제거했습니다.",
             registeredApps = registeredApps()
@@ -105,6 +113,30 @@ class AppWatcherManager(private val context: Context) {
     fun updateBetweenDelay(input: String) {
         input.toLongOrNull()?.let { seconds ->
             preferences.setBetweenDelayMs(seconds * 1000L)
+        }
+    }
+
+    fun updateMonitorEnabled(enabled: Boolean) {
+        preferences.setMonitorEnabled(enabled)
+        syncMonitoring()
+    }
+
+    fun updateMonitorInterval(input: String) {
+        input.toLongOrNull()?.let { seconds ->
+            preferences.setMonitorIntervalMs(seconds * 1000L)
+            syncMonitoring()
+        }
+    }
+
+    fun ensureMonitoringScheduled() {
+        syncMonitoring()
+    }
+
+    private fun syncMonitoring() {
+        if (preferences.monitorEnabled() && preferences.selectedPackages().isNotEmpty()) {
+            AppMonitorScheduler.scheduleNextCheck(context, "settings_changed")
+        } else {
+            AppMonitorScheduler.cancel(context)
         }
     }
 }
